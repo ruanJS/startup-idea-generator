@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Ideias de Startup</title>
+  <link rel="stylesheet" href="/css/styles.css"> <!-- Linkando o CSS -->
+  <script>
+    async function generateStartupIdea() {
+      const input = document.getElementById('input').value;
+
+      const response = await fetch('/generate-startup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ input }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        document.getElementById('output').innerText = 'Ideia de startup: ' + data.startupIdea;
+      } else {
+        document.getElementById('output').innerText = 'Erro: ' + data.error;
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>Gerador de Ideias de Startup</h1>
+  <div class="container">
+    <label for="input">Descreva seu conceito:</label><br>
+    <textarea id="input" rows="4" cols="50"></textarea><br><br>
+    <button onclick="generateStartupIdea()">Gerar Ideia</button>
+  </div>
+  <div>
+    <h2>Resultado:</h2>
+    <p id="output"></p>
+  </div>
+</body>
+</html>

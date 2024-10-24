@@ -1,0 +1,23 @@
+{
+  "name": "projeto-startup",
+  "version": "1.0.0",
+  "description": "Projeto que gera ideias inovadoras de startups com base nos inputs dos usuários usando a API do ChatGPT.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "keywords": [
+    "startup",
+    "chatgpt",
+    "openai",
+    "api",
+    "nodejs"
+  ],
+  "author": "Ruan Guedes - devguedess",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "openai": "^4.68.4"
+  }
+}

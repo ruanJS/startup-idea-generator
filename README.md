@@ -1,4 +1,4 @@
-#  AI Labs da ResumoCast Ventures Projeto - Gerador de Ideias de Startup
+#  AI Labs da ResumoCast Ventures - Projeto Gerador de Ideias de Startup
 
 Este projeto é uma aplicação web simples que gera ideias de startups com base em descrições fornecidas pelo usuário. A aplicação utiliza a API do OpenAI (GPT-3.5-turbo) para gerar respostas criativas e inovadoras.
 

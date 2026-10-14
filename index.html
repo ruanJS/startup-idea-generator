@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0d0d0d">
+  <title>Gerador de Ideias de Startup</title>
+  <link rel="stylesheet" href="/public/css/styles.css">
+</head>
+<body>
+  <main class="startup-screen">
+    <section id="chat-shell" class="chat-shell" aria-labelledby="page-title">
+      <h1 id="page-title">Como posso ajudar você hoje?</h1>
+
+      <section id="conversation" class="conversation" aria-live="polite" hidden>
+        <article class="user-message">
+          <p id="user-message-text"></p>
+        </article>
+
+        <section id="thinking" class="thinking" hidden>
+          <button id="thinking-toggle" class="thinking-header" type="button" aria-expanded="true">
+            <span id="thinking-icon" class="thinking-icon" aria-hidden="true">✦</span>
+            <span id="thinking-label">Pensando...</span>
+            <svg class="chevron" aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
+          </button>
+          <div id="thinking-trace" class="thinking-trace">
+            <div class="trace-line" aria-hidden="true"></div>
+            <div class="trace-step" data-step="0"><span class="trace-marker"></span><span>Analisando seu conceito</span></div>
+            <div class="trace-step" data-step="1"><span class="trace-marker"></span><span>Estruturando a oportunidade</span></div>
+            <div class="trace-step" data-step="2"><span class="trace-marker"></span><span>Gerando uma proposta de startup</span></div>
+          </div>
+        </section>
+
+        <article id="assistant-message" class="assistant-message" hidden>
+          <div class="assistant-avatar" aria-hidden="true">✦</div>
+          <div class="assistant-content">
+            <span class="assistant-name">Startup AI</span>
+            <p id="assistant-intro" class="assistant-intro">Aqui está sua resposta:</p>
+            <p id="output" class="output" role="status"></p>
+            <p id="assistant-follow-up" class="assistant-follow-up" hidden>O que deseja mais saber?</p>
+          </div>
+        </article>
+      </section>
+
+      <form id="startup-form" class="composer" novalidate>
+        <label class="sr-only" for="input">Descreva seu conceito de startup</label>
+        <textarea id="input" name="input" rows="1" maxlength="2000" placeholder="Envie uma mensagem..." autocomplete="off" required></textarea>
+        <div class="composer-actions">
+          <span class="composer-hint">Enter para enviar · Shift+Enter para nova linha</span>
+          <button id="submit-button" class="send-button" type="submit" aria-label="Enviar conceito">
+            <svg class="send-icon" aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M12 19V5m0 0-6 6m6-6 6 6" /></svg>
+            <span class="send-loader" aria-hidden="true"></span>
+          </button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const chatShell = document.getElementById('chat-shell');
+    const conversation = document.getElementById('conversation');
+    const userMessageText = document.getElementById('user-message-text');
+    const assistantMessage = document.getElementById('assistant-message');
+    const assistantFollowUp = document.getElementById('assistant-follow-up');
+    const form = document.getElementById('startup-form');
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+    const submitButton = document.getElementById('submit-button');
+    const thinking = document.getElementById('thinking');
+    const thinkingLabel = document.getElementById('thinking-label');
+    const thinkingIcon = document.getElementById('thinking-icon');
+    const thinkingToggle = document.getElementById('thinking-toggle');
+    const thinkingTrace = document.getElementById('thinking-trace');
+    let thinkingTimer;
+    let workStartedAt = 0;
+
+    function formatDuration(milliseconds) {
+      const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      const parts = [];
+      if (hours) parts.push(`${hours} h`);
+      if (minutes || hours) parts.push(`${minutes} min`);
+      parts.push(`${seconds} s`);
+      return parts.join(' ');
+    }
+
+    function updateWorkTime(label = 'Trabalhando por') {
+      thinkingLabel.textContent = `${label} ${formatDuration(Date.now() - workStartedAt)}`;
+    }
+
+    function resizeInput() {
+      input.style.height = 'auto';
+      input.style.height = `${Math.min(input.scrollHeight, 180)}px`;
+    }
+
+    function setThinking(isThinking, settledLabel = 'Ideia pronta') {
+      clearInterval(thinkingTimer);
+      thinking.hidden = false;
+      thinking.classList.toggle('is-thinking', isThinking);
+      if (isThinking) {
+        workStartedAt = Date.now();
+        updateWorkTime();
+      } else {
+        updateWorkTime(settledLabel === 'Ideia pronta' ? 'Trabalhou por' : 'Processou por');
+      }
+      thinkingIcon.textContent = isThinking ? '✦' : settledLabel === 'Ideia pronta' ? '✓' : '!';
+      submitButton.disabled = isThinking;
+      submitButton.classList.toggle('is-loading', isThinking);
+      input.disabled = isThinking;
+      thinkingToggle.setAttribute('aria-expanded', 'true');
+      thinkingTrace.hidden = false;
+
+      document.querySelectorAll('.trace-step').forEach((step) => step.classList.remove('is-active', 'is-done'));
+      if (!isThinking) {
+        document.querySelectorAll('.trace-step').forEach((step) => step.classList.add('is-done'));
+        return;
+      }
+
+      let currentStep = 0;
+      const advance = () => {
+        document.querySelectorAll('.trace-step').forEach((step, index) => {
+          step.classList.toggle('is-active', index === currentStep);
+          step.classList.toggle('is-done', index < currentStep);
+        });
+        currentStep = Math.min(currentStep + 1, 2);
+      };
+      advance();
+      thinkingTimer = setInterval(() => {
+        updateWorkTime();
+        advance();
+      }, 850);
+    }
+
+    thinkingToggle.addEventListener('click', () => {
+      const expanded = thinkingToggle.getAttribute('aria-expanded') === 'true';
+      thinkingToggle.setAttribute('aria-expanded', String(!expanded));
+      thinkingTrace.hidden = expanded;
+    });
+
+    input.addEventListener('input', () => {
+      resizeInput();
+      form.classList.toggle('has-content', Boolean(input.value.trim()));
+    });
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const concept = input.value.trim();
+      if (!concept) {
+        input.focus();
+        return;
+      }
+
+      chatShell.classList.add('has-conversation');
+      conversation.hidden = false;
+      userMessageText.textContent = concept;
+      assistantMessage.hidden = true;
+      assistantMessage.classList.remove('has-error');
+      assistantFollowUp.hidden = true;
+      output.textContent = '';
+      output.className = 'output';
+      input.value = '';
+      form.classList.remove('has-content');
+      resizeInput();
+      setThinking(true);
+      let requestSucceeded = false;
+
+      try {
+        const apiBaseUrl = window.location.port === '5500' ? 'http://localhost:3000' : '';
+        const response = await fetch(`${apiBaseUrl}/generate-startup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input: concept }),
+        });
+        const contentType = response.headers.get('content-type') || '';
+        const data = contentType.includes('application/json') ? await response.json() : {};
+        if (!response.ok) throw new Error(data.error || `Erro HTTP ${response.status}.`);
+        output.textContent = data.startupIdea || 'A API não retornou uma ideia.';
+        output.className = 'output is-result';
+        assistantFollowUp.hidden = false;
+        requestSucceeded = true;
+      } catch (error) {
+        output.textContent = error.message || 'Não foi possível conectar ao servidor.';
+        output.className = 'output is-error';
+      } finally {
+        setThinking(false, requestSucceeded ? 'Ideia pronta' : 'Não foi possível concluir');
+        assistantMessage.classList.toggle('has-error', !requestSucceeded);
+        assistantMessage.hidden = false;
+        input.disabled = false;
+        submitButton.disabled = false;
+      }
+    });
+
+    resizeInput();
+  </script>
+</body>
+</html>
